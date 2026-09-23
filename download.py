@@ -17,8 +17,17 @@ ENV_BIN = REPO_DIR / "env" / "bin"
 YTDLP = ENV_BIN / "yt-dlp"
 BUNDLED_FFMPEG = ENV_BIN / "ffmpeg"
 
-MUSIC_DIR = Path("/mnt/c/Users/Kia/Documents/Music")
-VIDEOS_DIR = Path("/mnt/c/Users/Kia/Videos")
+# Per-machine settings live in a local .env file (see .env.example).
+# Real environment variables take precedence over values in the file.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(REPO_DIR / ".env")
+except ImportError:
+    pass  # interpreter without python-dotenv: fall back to env vars / defaults
+
+MUSIC_DIR = Path(os.path.expanduser(os.environ.get("MUSIC_DIR", "~/Music")))
+VIDEOS_DIR = Path(os.path.expanduser(os.environ.get("VIDEOS_DIR", "~/Videos")))
 
 AUDIO_FORMATS = ("best", "m4a", "opus", "mp3", "wav")
 VIDEO_CONTAINERS = ("mkv", "mp4")

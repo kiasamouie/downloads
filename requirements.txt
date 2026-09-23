@@ -1,4 +1,5 @@
 # Python 3.11+ recommended (3.10 still works but yt-dlp prints a deprecation notice).
-# download.py itself only uses the standard library; its single dependency is the
-# yt-dlp executable, which this line installs into the virtual environment.
+# download.py itself only needs the standard library plus python-dotenv (for .env);
+# yt-dlp is the download engine installed into the virtual environment.
 yt-dlp==2026.08.19
+python-dotenv==1.2.3

@@ -1,76 +1,80 @@
 # Media Downloader
 
-Downloads to Windows-accessible folders:
+Best-quality audio and video downloader built on `yt-dlp` + `ffmpeg`.
 
-- Audio: `C:\Users\Kia\Documents\Music`
-- Video: `C:\Users\Kia\Videos`
+- **Audio** — the best audio stream the source offers (original, or converted to
+  `m4a`, `opus`, `mp3`, or `wav`).
+- **Video** — best separate video + audio streams merged with `ffmpeg`
+  (no unnecessary re-encoding).
 
-Already set up: virtual environment at `env/` on a bundled Python 3.12
-(`.py312`), with `yt-dlp` and a bundled static `ffmpeg`. Both launchers call
-`env/bin/python` directly, so no activation needed.
+## Requirements
 
-## Optional finalize step (requires sudo)
+- Python 3.10+ (3.11+ recommended — 3.10 works but prints a yt-dlp deprecation notice)
+- `ffmpeg` on your `PATH` (or a static binary placed in `env/bin/`)
 
-Installs system `ffmpeg` so it is available on PATH:
-
-```bash
-bash /home/kia/downloads/setup.sh
-```
-
-The downloader works either way. If you skip this, run the downloader commands
-below; if you run it, everything keeps working the same.
-
-## Installing on another machine
-
-The virtual environment (`env/`) and bundled Python (`.py312/`) are not tracked in
-git. To set up fresh (e.g. after cloning), from the repository root:
+## Install
 
 ```bash
-python3 -m venv env                       # a system Python 3.11+ is ideal
+python3 -m venv env
 env/bin/python -m pip install -r requirements.txt
+cp .env.example .env   # then edit it (see Configuration)
 ```
 
-Then make sure `ffmpeg` is on your PATH (e.g. `sudo apt install ffmpeg`), or drop a
-static `ffmpeg` into `env/bin/`. Both launchers call `env/bin/python` directly, so no
-activation is needed.
+The `audio` and `video` launchers call `env/bin/python` directly, so the venv does
+not need to be activated. On a non-POSIX system run
+`env/bin/python download.py audio|video ...` instead.
 
-The default output folders are Windows/WSL-specific constants near the top of
-`download.py` (`MUSIC_DIR` / `VIDEOS_DIR`); adjust them to suit your machine.
+## Configuration
 
-## Commands
+Output directories come from the environment, or from the `.env` file in the repo
+root (real environment variables take precedence over the file). Values support
+`~` expansion.
+
+| Variable     | Purpose             | Default    |
+|--------------|---------------------|------------|
+| `MUSIC_DIR`  | where audio goes    | `~/Music`  |
+| `VIDEOS_DIR` | where video goes    | `~/Videos` |
+
+On WSL, Windows folders are typically under `/mnt/<drive>/Users/<you>/...`, e.g.:
 
 ```bash
-# Best-quality audio (original stream, no re-encode)
-./audio "YOUTUBE_URL"
-
-# WAV (lossless decode of the best source audio)
-./audio "YOUTUBE_URL" --format wav
-
-# Best-quality video (MKV, maximum source quality, no transcode)
-./video "YOUTUBE_URL"
-
-# MP4-compatible video (remux only; may cap below 4K if only VP9/AV1 exists)
-./video "YOUTUBE_URL" --container mp4
-
-# Download a whole playlist
-./video "PLAYLIST_URL" --playlist
-./audio "PLAYLIST_URL" --playlist
-
-# Open the output folder in Windows Explorer
-./video "YOUTUBE_URL" --open
-./audio "YOUTUBE_URL" --open
+MUSIC_DIR=/mnt/c/Users/YOURUSER/Documents/Music
+VIDEOS_DIR=/mnt/c/Users/YOURUSER/Videos
 ```
 
-Run from inside `/home/kia/downloads`, or use the full path, e.g.
-`/home/kia/downloads/audio "URL"`.
+## Usage
+
+From the repo directory:
+
+```bash
+./audio "URL"                    # best-quality audio (original, no re-encode)
+./audio "URL" --format wav       # lossless PCM decode of the best audio
+./video "URL"                    # best-quality video (MKV, maximum quality)
+./video "URL" --container mp4    # MP4-compatible video (remux only)
+./video "PLAYLIST_URL" --playlist
+./audio "URL" --open             # open the output folder after downloading
+```
 
 ## Options
 
-- Audio `--format`: `best` (default), `m4a`, `opus`, `mp3`, `wav`
-  (`mp3` uses VBR0; `wav` is a straight PCM decode, not an upgrade).
-- Video `--container`: `mkv` (default), `mp4`.
-- Auth if ever needed: `--cookies cookies.txt` or `--cookies-from-browser chrome`.
+- Audio `--format`: `best` (default), `m4a`, `opus`, `mp3`, `wav`. `mp3` encodes at
+  VBR0; `wav` is a plain decode of the source audio (it does not add quality to a
+  lossy source).
+- Video `--container`: `mkv` (default — holds VP9/AV1/Opus/HDR without transcoding)
+  or `mp4` (restricted to MP4-compatible streams so the merge stays a remux;
+  high-resolution may be capped by what the source offers as MP4).
+- `--playlist` — download an entire playlist (default: single video only).
+- `--cookies FILE` / `--cookies-from-browser chrome` — optional authentication.
+- `--open` — on WSL this opens the result in Windows Explorer via `explorer.exe`;
+  elsewhere it prints the folder path.
 
-Note: if yt-dlp prints a warning about a missing JavaScript runtime (deno), it is
-harmless today; current format lists are still complete. If YouTube changes that
-later, run `./download.py video URL --js-runtimes deno` after installing deno.
+## Notes
+
+- Filenames are `Title [id]` and sanitized for Windows; existing files are never
+  overwritten.
+- If yt-dlp warns that no JavaScript runtime is available, it is harmless for now
+  (full format lists are still produced). If it ever matters, install deno and pass
+  `--js-runtimes deno:/path/to/deno`.
+- `setup.sh` is an optional helper for the author's WSL/Ubuntu box (fixes folder
+  ownership and installs system `ffmpeg` via apt); it is not needed for a fresh
+  install on another machine.
