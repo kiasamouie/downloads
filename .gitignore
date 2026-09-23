@@ -1,0 +1,15 @@
+# Python virtual environment (contains the installed yt-dlp + ffmpeg binaries)
+env/
+.venv/
+
+# Bundled standalone CPython used as the venv base on this machine (~350MB)
+.py312/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
